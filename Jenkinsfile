@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials-id') // Add Docker Hub credentials in Jenkins
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
         KUBECONFIG = '/path/to/kubeconfig' // Path to Kubernetes config file
     }
     stages {
@@ -15,20 +15,22 @@ pipeline {
                 stage('Build Frontend Image') {
                     steps {
                         script {
-                            docker.withRegistry('', DOCKERHUB_CREDENTIALS) {
-                                def frontendImage = docker.build("frontend-service:${env.BUILD_NUMBER}", "./frontend")
-                                frontendImage.push('latest')
-                            }
+                            sh """
+                            echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin
+                            docker build -t ramvn/frontend-service:latest ./frontend
+                            docker push ramvn/frontend-service:latest
+                            """
                         }
                     }
                 }
                 stage('Build Backend Image') {
                     steps {
                         script {
-                            docker.withRegistry('', DOCKERHUB_CREDENTIALS) {
-                                def backendImage = docker.build("backend-service:${env.BUILD_NUMBER}", "./backend")
-                                backendImage.push('latest')
-                            }
+                            sh """
+                            echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin
+                            docker build -t ramvn/backend-service:latest ./backend
+                            docker push ramvn/backend-service:latest
+                            """
                         }
                     }
                 }
